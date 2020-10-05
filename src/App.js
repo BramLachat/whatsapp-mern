@@ -4,6 +4,9 @@ import Sidebar from "./Sidebar";
 import Chat from "./Chat";
 import Pusher from "pusher-js";
 import axios from "./axios";
+import io from "socket.io-client";
+
+var socket = io("http://localhost:3000");
 
 function App() {
     const [messages, setMessages] = useState([]);
@@ -14,22 +17,32 @@ function App() {
     }, []);
 
     useEffect(() => {
-        var pusher = new Pusher("b0e6f7ee5d8ccbb227de", {
-            cluster: "eu",
-        });
-
-        var channel = pusher.subscribe("messages");
-        channel.bind("inserted", (newMessage) => {
+        socket.on("chat message", (newMessage) => {
             //alert(JSON.stringify(newMessage));
             setMessages([...messages, newMessage]);
         });
-
-        //cleanup function:
         return () => {
-            channel.unbind_all();
-            channel.unsubscribe();
+            socket.off("chat message");
         };
-    }, [messages]); // <== React Hook useEffect has a missing dependency: 'messages'.
+    }, [messages]);
+
+    // useEffect(() => {
+    //     var pusher = new Pusher("b0e6f7ee5d8ccbb227de", {
+    //         cluster: "eu",
+    //     });
+
+    //     var channel = pusher.subscribe("messages");
+    //     channel.bind("inserted", (newMessage) => {
+    //         //alert(JSON.stringify(newMessage));
+    //         setMessages([...messages, newMessage]);
+    //     });
+
+    //     //cleanup function:
+    //     return () => {
+    //         channel.unbind_all();
+    //         channel.unsubscribe();
+    //     };
+    // }, [messages]); // <== React Hook useEffect has a missing dependency: 'messages'.
     // Either include it or remove the dependency array. You can also do a functional
     // update 'setMessages(m => ...)' if you only need 'messages' in the 'setMessages'
     // call  react-hooks/exhaustive-deps
@@ -40,7 +53,7 @@ function App() {
         <div className="app">
             <div className="app__body">
                 <Sidebar />
-                <Chat />
+                <Chat messages={messages} />
             </div>
         </div>
     );
